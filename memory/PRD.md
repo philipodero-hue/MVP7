@@ -1,107 +1,74 @@
-# Servex Holdings - Logistics Management SaaS PRD
+# Servex Holdings - Logistics Management Platform
 
-**Last Updated:** 2026-03-06  
-**Status:** Session Q, R, T Complete | Session S Excluded
+## Original Problem Statement
+Build a comprehensive full-stack logistics management application for African freight companies. Multi-tenant SaaS platform with React frontend, FastAPI backend, and MongoDB database.
 
----
-
-## Problem Statement
-Multi-tenant logistics SaaS for African freight companies. Implement Sessions Q, R, T features (leave out Session S - CraftMyPDF). Test and preview everything.
-
-## Architecture
-- **Frontend:** React + Tailwind CSS + Shadcn UI  
-- **Backend:** FastAPI + Python  
-- **Database:** MongoDB  
-- **Auth:** Session/Cookie-based JWT
+## Core Requirements
+- Parcel intake (manual + CSV import) with 8-digit SX-format barcodes
+- Warehouse management with barcode scanning
+- Trip planning and loading/unloading workflow
+- Multi-feature invoicing, finance section (client statements, payment history)
+- User/team management with tier-based permissions
+- System settings, data export, and smart email alerts
 
 ## User Personas
-- Warehouse operators (intake parcels, print labels)
-- Finance team (create invoices, record payments)
-- Admin/owners (settings, exports, reports)
+- **Tier 1 (Admin/Owner)**: Full system access, manages team and settings
+- **Tier 2 (Manager)**: Operations and finance, no settings
+- **Tier 3 (Operations)**: Parcel intake, warehouse, loading
+- **Tier 4 (Finance)**: Dashboard, clients, finance
+- **Tier 5 (View Only)**: Dashboard and trips only
 
----
-
-## Core Requirements (Static)
-
-### Parcel Lifecycle
-1. Intake → Staged → Loaded → In Transit → Arrived → Delivered/Collected
-
-### Invoice Lifecycle
-1. Draft → Sent → Partial → Paid
-
----
+## Architecture
+- **Frontend**: React, Tailwind CSS, Shadcn UI, lucide-react icons
+- **Backend**: FastAPI, Motor (async MongoDB), Pydantic models
+- **Database**: MongoDB
+- **Auth**: Session-based (cookies), role-based permissions
 
 ## What's Been Implemented
 
-## What's Been Implemented
+### Sessions Q, R, T (Complete)
+- 8-digit barcode format (SX...) with migration
+- System Export feature
+- 4-Hour Smart Emails with background scheduler
+- Invoice Totals Row, payment recording fixes
+- Trip assignment updates parcel destination
+- Standardized scrollbar colors
 
-### Session Q (2026-03-06)
-- ✅ **8-Digit Barcode Format** - Changed to `SX{sequence:08d}`, no annual reset. Migration run: 1080 existing parcels assigned SX barcodes. Warehouse now shows SX00000001 format.
-- ✅ **Remove "Table View" Text** - Heading changed to "Parcel Intake"
-- ✅ **Red Highlight for Parcels Without Trip** - `bg-red-50 border-l-4 border-l-red-400` in Warehouse.jsx
-- ✅ **Save All & Print Working** - Fixed: `handleSaveAll` now returns `createdParcels`
-- ✅ **Invoice Consolidation Toggle** - "Consolidate Identical" button groups identical items in InvoiceEditor view
+### Bug Fix Rounds 1-3 (Complete)
+- CSV import parcel count, rate rounding, barcode generation
+- Finance tab reordering, Payment History tab
+- Invoice line item consolidation with toggle
+- Invoice status "sent" → "finalized", overpayment support
+- PDF barcodes wider for scannability
+- Login/Landing page dark color scheme
 
-### Session R (2026-03-06)
-- ✅ **System Export** - GET `/api/data/system-export` returns ZIP with all tenant data
-- ✅ **4-Hour Smart Emails** - Email alert backend routes + Settings > Email Alerts tab
-
-### Session T (2026-03-06)
-- ✅ **Payment Recording** - Fixed missing `@router.post` decorator
-- ✅ **Destination Showing** - Shows "No Trip" in red when no trip_id; trip assignment updates destination
-- ✅ **Invoice Totals Row** - TOTALS row with QTY, Weight, Vol Wt, Ship Wt, Amount
-- ✅ **Scrollbar Colors** - Dark gray `#3C3F42` with `!important`
-
-### Bug Fixes Round 2 (2026-03-06)
-- ✅ **Create Trip button** - Added "+" button in ParcelIntake below trip selector → opens modal with route, vehicle, driver, notes → creates trip via API → auto-selects it
-- ✅ **Invoice "Finalized" status** - Finalize endpoint now sets `status: "finalized"`, not `"sent"`. 46 existing invoices migrated. Reopen endpoint handles finalized+sent+overdue.
-- ✅ **Outstanding amount in invoice list** - Invoice list items restructured: Client Name / Invoice # (top row), Team Member + Status badge + Outstanding (red) (bottom row)
-- ✅ **Overpayment allowed** - Removed `if amount > outstanding: raise HTTPException` check. Clients can overpay.
-- ✅ **Client statements auto-refresh** - `useEffect([activeTab])` now triggers `fetchStatements()` when switching to statements tab
-- ✅ **Login page dark theme** - Background: `#3C3F42`, Sign In button: `#E8DC88` golden, text: white. Matches Finance tabs.
-- ✅ **Barcode wider** - `barWidth` increased from `0.6` to `1.2` in pdf_service.py (bars now ~0.42mm, exceeds 0.25mm scanner minimum)
-
----
-
-## Files Modified (Session Q/R/T)
-| File | Changes |
-|------|---------|
-| `backend/services/barcode_service.py` | 8-digit format, no annual reset |
-| `backend/routes/invoice_routes.py` | Added @router.post decorator to record_invoice_payment |
-| `backend/routes/warehouse_routes.py` | bulk_assign_trip now updates destination field |
-| `backend/routes/trip_routes.py` | assign-shipment now updates destination from trip route |
-| `backend/routes/data_routes.py` | Added system export endpoint + StreamingResponse imports |
-| `backend/routes/email_alert_routes.py` | NEW - SMTP config, 4h email send, test endpoint |
-| `backend/services/email_service.py` | NEW - SMTP email with CSV attachment |
-| `backend/server.py` | Added email_alert_routes, scheduler coroutine |
-| `backend/routes/__init__.py` | Added email_alert_routes export |
-| `frontend/src/pages/ParcelIntake.jsx` | Remove Table View, fix Save & Print return value |
-| `frontend/src/pages/Warehouse.jsx` | Red highlight no-trip, "No Trip" destination display |
-| `frontend/src/components/InvoiceEditor.jsx` | TOTALS row, extended totals calculation |
-| `frontend/src/pages/Settings.jsx` | System export button, Email Alerts tab/UI/functions |
-| `frontend/src/index.css` | Scrollbar dark gray #3C3F42 |
-
----
+### Latest Bug Fix Round (Complete - Feb 2026)
+1. **Create Trip button** - Fixed nested Dialog bug, Create Trip modal now opens correctly
+2. **Action button repositioning** - Moved to header, colored green/blue/red
+3. **Manual barcode generation** - Added barcode field to Shipment model (was missing)
+4. **Tier rename** - Roles renamed to Tier 1-5 across frontend (Team, Layout, NotesPanel, Settings, etc.)
+5. **Loading/Unloading dark theme** - Updated to match Finance page (#3C3F42 + #E8DC88)
+6. **WhatsApp fix** - Added phone fallback when whatsapp field is null
+7. **Auto-populate moved** - Removed from Trip Worksheets, kept in Invoices tab
+8. **Payment History search/filter** - Added search bar + trip filter dropdown
 
 ## Prioritized Backlog
 
-### P0 (Critical, blocking operations)
-- None currently
+### P2 - Future
+- Session S implementation (explicitly deferred by user)
 
-### P1 (Important, next session)
-- Session S: CraftMyPDF Integration & Quote Generation
-- End-to-end barcode test with real parcel creation
-- Invoice consolidation end-to-end verification (10 identical items → 1 row)
+## Key Files
+- `frontend/src/pages/ParcelIntake.jsx` - Parcel intake with CSV/manual
+- `frontend/src/pages/Finance.jsx` - Finance tabs (dashboard, worksheets, statements, invoices, payment history)
+- `frontend/src/pages/LoadingStaging.jsx` - Loading/unloading workflow
+- `frontend/src/pages/Team.jsx` - Team management with tier roles
+- `frontend/src/components/Layout.jsx` - Navigation with role-based filtering
+- `frontend/src/components/InvoiceEditor.jsx` - Invoice management
+- `backend/routes/shipment_routes.py` - Shipment CRUD
+- `backend/routes/invoice_routes.py` - Invoice/payment CRUD
+- `backend/services/barcode_service.py` - SX barcode generation
+- `backend/dependencies.py` - Auth + tier-based permissions
 
-### P2 (Enhancement)
-- Email alert scheduler: Consider using persistent cron vs in-memory asyncio loop
-- Barcode scan testing with Honeywell IHS310X
-
----
-
-## Next Tasks
-1. Test with real data: create clients, parcels, trips, invoices
-2. Verify barcode SX00000001 format on labels
-3. Test payment recording on a real invoice
-4. Test system export ZIP contents
-5. Implement Session S (CraftMyPDF) when requested
+## Test Credentials
+- Email: admin@servex.com
+- Password: Servex2026!
