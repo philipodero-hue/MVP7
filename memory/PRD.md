@@ -33,27 +33,32 @@ Multi-tenant logistics SaaS for African freight companies. Implement Sessions Q,
 
 ## What's Been Implemented
 
+## What's Been Implemented
+
 ### Session Q (2026-03-06)
-- ✅ **8-Digit Barcode Format** - Changed `SX{sequence:06d}` → `SX{sequence:08d}`, removed annual reset from counter_key
+- ✅ **8-Digit Barcode Format** - Changed to `SX{sequence:08d}`, no annual reset. Migration run: 1080 existing parcels assigned SX barcodes. Warehouse now shows SX00000001 format.
 - ✅ **Remove "Table View" Text** - Heading changed to "Parcel Intake"
 - ✅ **Red Highlight for Parcels Without Trip** - `bg-red-50 border-l-4 border-l-red-400` in Warehouse.jsx
-- ✅ **Save All & Print Working** - Fixed: `handleSaveAll` now returns `createdParcels`, `handleSaveAllAndPrint` uses returned IDs
-- ✅ **Invoice Quantity Consolidation** - Existing implementation verified
-- ✅ **Barcode Centering on Labels** - Existing implementation verified
+- ✅ **Save All & Print Working** - Fixed: `handleSaveAll` now returns `createdParcels`
+- ✅ **Invoice Consolidation Toggle** - "Consolidate Identical" button groups identical items in InvoiceEditor view
 
 ### Session R (2026-03-06)
-- ✅ **System Export** - GET `/api/data/system-export` returns ZIP with all tenant data (clients, shipments, trips, invoices, payments, warehouses, settings)
-- ✅ **4-Hour Smart Emails** - Email alert backend routes, SMTP config, scheduler runs every 4h. Settings > Email Alerts tab with toggle, recipient, SMTP config, test email button
+- ✅ **System Export** - GET `/api/data/system-export` returns ZIP with all tenant data
+- ✅ **4-Hour Smart Emails** - Email alert backend routes + Settings > Email Alerts tab
 
 ### Session T (2026-03-06)
-- ✅ **Payment Recording** - Added missing `@router.post("/invoices/{invoice_id}/record-payment")` decorator to `record_invoice_payment` function
-- ✅ **Destination Showing Correctly** - Assignment routes now update `destination` from trip route, UI shows "No Trip" in red when no trip_id
-- ✅ **Invoice Totals Row** - Added TOTALS row at bottom of line items table with QTY, Weight, Vol Wt, Ship Wt, Amount (all in olive gold #6B633C)
-- ✅ **Scrollbar Colors** - Changed to `#3C3F42` (dark gray) with `#2C2F32` on hover in index.css
+- ✅ **Payment Recording** - Fixed missing `@router.post` decorator
+- ✅ **Destination Showing** - Shows "No Trip" in red when no trip_id; trip assignment updates destination
+- ✅ **Invoice Totals Row** - TOTALS row with QTY, Weight, Vol Wt, Ship Wt, Amount
+- ✅ **Scrollbar Colors** - Dark gray `#3C3F42` with `!important`
 
-### Session S (Excluded per user request)
-- ❌ CraftMyPDF Integration
-- ❌ Quote Generation
+### Bug Fixes (2026-03-06)
+- ✅ **CSV Import Column Parser** - Header-based parsing: correctly handles `Sent By, Primary Recipient, Description, QTY, KG, L, W, H` format
+- ✅ **Rate Rounding** - `shipWeight` rounded to 2dp before `× rate` (25.22 × 36 = 907.92 not 907.80)
+- ✅ **Finance Tabs Order** - Invoices | Client Statements | Trip Worksheets | Overdue | Payment History
+- ✅ **Payment History Tab** - New tab in Finance showing all payments with recorder name, time, invoice, method
+- ✅ **Barcode in Warehouse** - Column now shows `parcel.barcode` (SX format) not `parcel.id.slice(0,8)`
+- ✅ **Barcode Migration** - Endpoint `/data/migrate-barcodes` retroactively assigned SX barcodes to 1080 existing parcels
 
 ---
 
