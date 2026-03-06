@@ -82,7 +82,7 @@ const paymentMethodConfig = {
 
 export function InvoiceEditor() {
   const { user } = useAuth();
-  const canUnlock = user?.role === 'owner' || user?.role === 'manager';
+  const canUnlock = user?.role === 'owner' || user?.role === 'tier_1' || user?.role === 'manager' || user?.role === 'tier_2';
   const navigate = useNavigate();
   const location = useLocation();
   

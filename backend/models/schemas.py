@@ -190,6 +190,7 @@ class ShipmentUpdate(BaseModel):
 class Shipment(ShipmentBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    barcode: Optional[str] = None  # Short SX-format barcode
     tenant_id: str
     client_id: str
     trip_id: Optional[str] = None

@@ -209,7 +209,7 @@ export function NotesPanel({ entityType, entityId, buttonVariant = 'outline' }) 
                     insertMention(member.name);
                   }}
                 >
-                  {member.name} <span className="text-muted-foreground text-xs">({member.role})</span>
+                  {member.name} <span className="text-muted-foreground text-xs">({{'owner':'Tier 1','tier_1':'Tier 1','manager':'Tier 2','tier_2':'Tier 2','warehouse':'Tier 3','tier_3':'Tier 3','finance':'Tier 4','tier_4':'Tier 4','driver':'Tier 5','tier_5':'Tier 5'}[member.role] || member.role})</span>
                 </button>
               ))}
             </div>

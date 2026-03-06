@@ -372,7 +372,6 @@ export function Team() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="owner">Tier 1 (Admin)</SelectItem>
-                      <SelectItem value="tier_1">Tier 1 (Admin)</SelectItem>
                       <SelectItem value="tier_2">Tier 2 (Manager)</SelectItem>
                       <SelectItem value="tier_3">Tier 3 (Operations)</SelectItem>
                       <SelectItem value="tier_4">Tier 4 (Finance)</SelectItem>

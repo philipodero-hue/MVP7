@@ -914,7 +914,7 @@ export function Settings() {
     toast.success('Template downloaded');
   };
 
-  const isOwner = user?.role === 'owner';
+  const isOwner = user?.role === 'owner' || user?.role === 'tier_1';
 
   if (!isOwner) {
     return (

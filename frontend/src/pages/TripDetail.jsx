@@ -642,8 +642,8 @@ export function TripDetail() {
   const { trip, stats, created_by, created_at } = tripData;
   const status = statusConfig[trip.status] || statusConfig.planning;
   const isLocked = !!trip.locked_at;
-  const isOwner = user?.role === 'owner';
-  const isManager = user?.role === 'manager';
+  const isOwner = user?.role === 'owner' || user?.role === 'tier_1';
+  const isManager = user?.role === 'manager' || user?.role === 'tier_2';
   const canApprove = isOwner || isManager;
 
   return (

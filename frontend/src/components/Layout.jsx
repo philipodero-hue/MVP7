@@ -53,10 +53,15 @@ const navItems = [
 // Default permissions (scanner removed)
 const defaultPermissions = {
   owner: ['dashboard', 'parcel-intake', 'warehouse', 'clients', 'loading', 'trips', 'finance', 'fleet', 'team', 'settings'],
+  tier_1: ['dashboard', 'parcel-intake', 'warehouse', 'clients', 'loading', 'trips', 'finance', 'fleet', 'team', 'settings'],
   manager: ['dashboard', 'parcel-intake', 'warehouse', 'clients', 'loading', 'trips', 'finance', 'fleet', 'team'],
+  tier_2: ['dashboard', 'parcel-intake', 'warehouse', 'clients', 'loading', 'trips', 'finance', 'fleet', 'team'],
   warehouse: ['dashboard', 'parcel-intake', 'warehouse', 'loading'],
+  tier_3: ['dashboard', 'parcel-intake', 'warehouse', 'loading'],
   finance: ['dashboard', 'clients', 'finance'],
+  tier_4: ['dashboard', 'clients', 'finance'],
   driver: ['dashboard', 'trips'],
+  tier_5: ['dashboard', 'trips'],
 };
 
 // Helper function to check if a nav item should be active
@@ -110,8 +115,8 @@ export function Layout() {
   const filteredNavItems = navItems.filter(item => {
     if (!user?.role) return true;
     
-    // Owners always have full access
-    if (user.role === 'owner') return true;
+    // Owners (tier_1) always have full access
+    if (user.role === 'owner' || user.role === 'tier_1') return true;
     
     // Check user's custom_permissions first (takes priority)
     if (user.custom_permissions?.pages) {
