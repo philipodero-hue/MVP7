@@ -61,12 +61,12 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      <div className="rounded-2xl shadow-2xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', border: '1px solid rgba(232,220,136,0.2)' }}>
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-white">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
-          <p className="text-gray-600 mt-2">
+          <p className="text-white/60 mt-2">
             {isLogin 
               ? 'Sign in to access your logistics dashboard' 
               : 'Start managing your logistics operations'}
@@ -77,7 +77,7 @@ export function LoginForm() {
           {!isLogin && (
             <>
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-1">
                   Full Name
                 </label>
                 <input
@@ -87,12 +87,13 @@ export function LoginForm() {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="John Doe"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B633C] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-lg transition-all text-white placeholder-white/30"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(232,220,136,0.3)', outline: 'none' }}
                   data-testid="register-name-input"
                 />
               </div>
               <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="companyName" className="block text-sm font-medium text-white/80 mb-1">
                   Company Name (Optional)
                 </label>
                 <input
@@ -102,7 +103,8 @@ export function LoginForm() {
                   value={formData.companyName}
                   onChange={handleChange}
                   placeholder="Your Company Ltd"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B633C] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-lg transition-all text-white placeholder-white/30"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(232,220,136,0.3)', outline: 'none' }}
                   data-testid="register-company-input"
                 />
               </div>
@@ -110,7 +112,7 @@ export function LoginForm() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-1">
               Email Address
             </label>
             <input
@@ -121,13 +123,14 @@ export function LoginForm() {
               value={formData.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B633C] focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-lg transition-all text-white placeholder-white/30"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(232,220,136,0.3)', outline: 'none' }}
               data-testid="login-email-input"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-1">
               Password
             </label>
             <div className="relative">
@@ -139,13 +142,14 @@ export function LoginForm() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B633C] focus:border-transparent transition-all"
+                className="w-full px-4 py-3 pr-12 rounded-lg transition-all text-white placeholder-white/30"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(232,220,136,0.3)', outline: 'none' }}
                 data-testid="login-password-input"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -153,7 +157,7 @@ export function LoginForm() {
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm" data-testid="auth-error">
+            <div className="px-4 py-3 rounded-lg text-sm text-red-300" style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }} data-testid="auth-error">
               {error}
             </div>
           )}
@@ -161,7 +165,8 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#6B633C] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#5a5332] focus:ring-2 focus:ring-offset-2 focus:ring-[#6B633C] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{ backgroundColor: '#E8DC88', color: '#3C3F42' }}
             data-testid="login-submit-button"
           >
             {loading ? (
@@ -187,7 +192,8 @@ export function LoginForm() {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-[#6B633C] hover:underline font-medium"
+            className="text-sm font-medium hover:underline"
+            style={{ color: '#E8DC88' }}
             data-testid="toggle-auth-mode"
           >
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
@@ -195,9 +201,9 @@ export function LoginForm() {
         </div>
 
         {isLogin && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 text-center">
-              <strong>Demo Account:</strong><br />
+          <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <p className="text-xs text-white/50 text-center">
+              <strong className="text-white/70">Demo Account:</strong><br />
               Email: admin@servex.com<br />
               Password: Servex2026!
             </p>
@@ -207,3 +213,4 @@ export function LoginForm() {
     </div>
   );
 }
+

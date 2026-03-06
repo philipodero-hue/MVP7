@@ -499,7 +499,8 @@ async def update_invoice(
     action = AuditAction.status_change if "status" in update_dict else AuditAction.update
     
     # Handle status changes
-    if update_dict.get("status") == "sent" and invoice["status"] == "draft":
+    if update_dict.get("status") in ("sent", "finalized") and invoice["status"] == "draft":
+        update_dict["status"] = "finalized"  # Always use "finalized" when moving from draft
         update_dict["sent_at"] = datetime.now(timezone.utc).isoformat()
         update_dict["sent_by"] = user["id"]
         # Update associated parcel statuses to ready_to_load
@@ -841,9 +842,9 @@ async def delete_payment(
             total_paid = sum(p["amount"] for p in payments)
             
             if total_paid < invoice["total"]:
-                # Revert to sent or overdue
+                # Revert to finalized or overdue
                 today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                new_status = "overdue" if invoice["due_date"] < today else "sent"
+                new_status = "overdue" if invoice["due_date"] < today else "finalized"
                 await db.invoices.update_one(
                     {"id": invoice_id},
                     {"$set": {"status": new_status, "paid_at": None}}
@@ -1096,7 +1097,7 @@ async def finalize_invoice(
     await db.invoices.update_one(
         {"id": invoice_id},
         {"$set": {
-            "status": "sent",
+            "status": "finalized",
             "sent_at": now.isoformat(),
             "sent_by": user["id"],
             "rate_locked": True  # SESSION P PART 5: Lock rates on finalization
@@ -1119,10 +1120,10 @@ async def finalize_invoice(
         table_name="invoices",
         record_id=invoice_id,
         old_value=old_value,
-        new_value={"status": "sent"},
+        new_value={"status": "finalized"},
         ip_address=request.client.host if request.client else None
     )
-    
+    return {"message": "Invoice finalized", "status": "finalized"}
 
 @router.post("/invoices/{invoice_id}/reopen")
 async def reopen_invoice(
@@ -1150,11 +1151,11 @@ async def reopen_invoice(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
-    # Only allow reopening of sent or overdue invoices
-    if invoice["status"] not in ["sent", "overdue"]:
+    # Only allow reopening of finalized or overdue invoices (and legacy "sent")
+    if invoice["status"] not in ["finalized", "sent", "overdue"]:
         raise HTTPException(
             status_code=400,
-            detail=f"Only 'sent' or 'overdue' invoices can be reopened. Current status: {invoice['status']}"
+            detail=f"Only 'finalized' or 'overdue' invoices can be reopened. Current status: {invoice['status']}"
         )
     
     old_value = dict(invoice)
@@ -1329,14 +1330,12 @@ async def record_invoice_payment(
     # Get existing payments
     existing_payments = await db.payments.find({"invoice_id": invoice_id}, {"_id": 0, "amount": 1}).to_list(100)
     paid_so_far = sum(p.get("amount", 0) for p in existing_payments)
-    outstanding = invoice["total"] - paid_so_far
     
     amount = data.get("amount", 0)
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Payment amount must be positive")
     
-    if amount > outstanding:
-        raise HTTPException(status_code=400, detail=f"Payment exceeds outstanding amount of {outstanding}")
+    # Allow overpayments - clients sometimes pay more than owed
     
     # Create payment
     payment = {

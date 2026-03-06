@@ -722,15 +722,15 @@ async def generate_labels_pdf(shipment_ids: list, tenant_id: str):
         y_barcode_bottom = PAD + 1 * mm
 
         try:
-            # BUG 2c FIX: Reduced barWidth from 1.5 to 0.6 for scanner compatibility
+            # Wider barcode bars for better scanner readability (barWidth 1.2 = ~0.42mm per bar)
             barcode = code128.Code128(
                 barcode_value,
                 barHeight=BARCODE_H,
-                barWidth=0.6,  # Optimal for Honeywell scanner (0.1-0.33mm X-dimension)
+                barWidth=1.2,  # Increased from 0.6 for clear scanning (≥0.25mm X-dimension required)
                 humanReadable=True,
-                fontSize=7  # Increased from 6 for better readability
+                fontSize=8
             )
-            # BUG 2b FIX: Always use actual barcode width for centering (removed BARCODE_W_MAX clipping)
+            # Center the barcode on the label
             x_bc = (LABEL_W - barcode.width) / 2
             barcode.drawOn(c, x_bc, y_barcode_bottom)
         except Exception:

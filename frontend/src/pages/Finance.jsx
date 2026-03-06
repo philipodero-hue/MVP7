@@ -227,6 +227,13 @@ export function Finance() {
     fetchPaymentHistory();
   }, []);
 
+  // Auto-refresh when switching to statements tab
+  useEffect(() => {
+    if (activeTab === 'statements') fetchStatements();
+    if (activeTab === 'overdue') fetchOverdue();
+    if (activeTab === 'payment-history') fetchPaymentHistory();
+  }, [activeTab]);
+
   // Refetch overdue when filters change
   useEffect(() => {
     if (activeTab === 'overdue') {

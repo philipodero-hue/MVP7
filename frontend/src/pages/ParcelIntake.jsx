@@ -115,6 +115,11 @@ export function ParcelIntake() {
   const [clients, setClients] = useState([]);
   const [trips, setTrips] = useState([]);
   const [rows, setRows] = useState([createEmptyRow(1), createEmptyRow(2), createEmptyRow(3)]);
+
+  // Create Trip Modal
+  const [createTripOpen, setCreateTripOpen] = useState(false);
+  const [createTripData, setCreateTripData] = useState({ route_input: '', vehicle: '', driver: '', notes: '' });
+  const [createTripLoading, setCreateTripLoading] = useState(false);
   
   // UI State
   const [clientOpen, setClientOpen] = useState(false);
@@ -214,6 +219,35 @@ export function ParcelIntake() {
       setTrips(response.data.filter(t => !['closed', 'delivered'].includes(t.status)));
     } catch (error) {
       console.error('Failed to fetch trips');
+    }
+  };
+
+  // Create a new trip from ParcelIntake
+  const handleCreateTrip = async () => {
+    if (!createTripData.route_input.trim()) {
+      toast.error('Enter at least one route destination');
+      return;
+    }
+    setCreateTripLoading(true);
+    try {
+      const route = createTripData.route_input.split(',').map(s => s.trim()).filter(Boolean);
+      const payload = {
+        route,
+        vehicle: createTripData.vehicle || null,
+        driver: createTripData.driver || null,
+        notes: createTripData.notes || null,
+      };
+      const response = await axios.post(`${API}/trips`, payload, { withCredentials: true });
+      const newTrip = response.data;
+      await fetchTrips();
+      setSelectedTrip(newTrip);
+      setCreateTripOpen(false);
+      setCreateTripData({ route_input: '', vehicle: '', driver: '', notes: '' });
+      toast.success(`Trip ${newTrip.trip_number} created and selected`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create trip');
+    } finally {
+      setCreateTripLoading(false);
     }
   };
 
@@ -1000,6 +1034,17 @@ export function ParcelIntake() {
                   ))}
                 </SelectContent>
               </Select>
+              {/* Create Trip button - opens quick creation modal */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-1.5 w-full text-xs border-dashed border-[#6B633C]/40 text-[#6B633C] hover:bg-[#6B633C]/5"
+                onClick={() => setCreateTripOpen(true)}
+                data-testid="create-trip-btn"
+                type="button"
+              >
+                + Create New Trip
+              </Button>
             </div>
           </div>
 
@@ -1686,6 +1731,70 @@ export function ParcelIntake() {
                 Add New Client
               </DialogTitle>
             </DialogHeader>
+
+        {/* Create Trip Modal */}
+        <Dialog open={createTripOpen} onOpenChange={setCreateTripOpen}>
+          <DialogContent className="max-w-md" data-testid="create-trip-modal">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <svg className="h-5 w-5 text-[#6B633C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Create New Trip
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div>
+                <Label className="text-sm font-medium">Route Destinations <span className="text-red-500">*</span></Label>
+                <p className="text-xs text-muted-foreground mb-1">Enter destinations separated by commas (e.g. Nairobi, Mombasa)</p>
+                <Input
+                  value={createTripData.route_input}
+                  onChange={e => setCreateTripData(p => ({ ...p, route_input: e.target.value }))}
+                  placeholder="Nairobi, Mombasa, Dar es Salaam"
+                  data-testid="create-trip-route-input"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm font-medium">Vehicle (optional)</Label>
+                  <Input
+                    value={createTripData.vehicle}
+                    onChange={e => setCreateTripData(p => ({ ...p, vehicle: e.target.value }))}
+                    placeholder="e.g. KBZ 123A"
+                    data-testid="create-trip-vehicle-input"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Driver (optional)</Label>
+                  <Input
+                    value={createTripData.driver}
+                    onChange={e => setCreateTripData(p => ({ ...p, driver: e.target.value }))}
+                    placeholder="Driver name"
+                    data-testid="create-trip-driver-input"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Notes (optional)</Label>
+                <Input
+                  value={createTripData.notes}
+                  onChange={e => setCreateTripData(p => ({ ...p, notes: e.target.value }))}
+                  placeholder="Any trip notes..."
+                  data-testid="create-trip-notes-input"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateTripOpen(false)}>Cancel</Button>
+              <Button
+                onClick={handleCreateTrip}
+                disabled={createTripLoading || !createTripData.route_input.trim()}
+                className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
+                data-testid="create-trip-submit-btn"
+              >
+                {createTripLoading ? 'Creating...' : 'Create Trip & Select'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
             <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
               {/* SESSION 6: Added all fields from Clients page */}
               <div>

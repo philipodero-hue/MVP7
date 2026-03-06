@@ -63,7 +63,8 @@ const API = `${window.location.origin}/api`;
 // Status config
 const statusConfig = {
   draft: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Draft' },
-  sent: { bg: 'bg-[#E8DC88]', text: 'text-[#3C3F42]', label: 'Sent' },
+  sent: { bg: 'bg-[#E8DC88]', text: 'text-[#3C3F42]', label: 'Finalized' },  // Legacy alias
+  finalized: { bg: 'bg-[#6B633C]', text: 'text-white', label: 'Finalized' },
   paid: { bg: 'bg-green-100', text: 'text-green-700', label: 'Paid' },
   overdue: { bg: 'bg-red-100', text: 'text-red-700', label: 'Overdue' },
   partial: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Partial' }
@@ -956,7 +957,7 @@ export function InvoiceEditor() {
         line_items: lineItems,
         adjustments: adjustments,
         total: totals.total,
-        status: finalize ? 'sent' : 'draft'
+        status: finalize ? 'finalized' : 'draft'
       };
 
       if (selectedInvoiceId) {
@@ -1643,14 +1644,15 @@ export function InvoiceEditor() {
                     key={inv.id}
                     onClick={() => selectInvoice(inv.id)}
                     className={cn(
-                      "px-2 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors border-b-2 border-gray-200",
+                      "px-2 py-2 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100",
                       selectedInvoiceId === inv.id && "bg-[#E8E4D0]/30 border-l-2 border-[#6B633C]",
                       flashedInvoiceId === inv.id && "invoice-saved-flash"
                     )}
                     data-testid={`invoice-item-${inv.id}`}
                     style={{ fontSize: '0.75rem' }}
                   >
-                    <div className="flex items-center gap-1">
+                    {/* Row 1: Client Name + Invoice # */}
+                    <div className="flex items-center gap-1 mb-1">
                       {inv.status === 'draft' && (
                         <input
                           type="checkbox"
@@ -1666,22 +1668,30 @@ export function InvoiceEditor() {
                           data-testid={`checkbox-${inv.id}`}
                         />
                       )}
-                      {/* SESSION 6: Client name on same row as invoice #, increased font size */}
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <span className="text-[10px] text-gray-600 truncate">{inv.client_name}</span>
-                        <span className="text-gray-300">•</span>
-                        <span className="font-mono text-[12px] font-medium truncate">{inv.invoice_number}</span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <span className="font-medium text-[11px] truncate flex-1">{inv.client_name || '—'}</span>
+                      <span className="font-mono text-[10px] text-gray-500 shrink-0">{inv.invoice_number}</span>
+                    </div>
+                    {/* Row 2: Team member + Status + Outstanding */}
+                    <div className="flex items-center gap-1.5 justify-between">
+                      <div className="flex items-center gap-1">
                         {inv.sent_by_name && (
-                          <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[#6B633C]/10 text-[#6B633C] text-[8px] font-bold">
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#6B633C]/15 text-[#6B633C] text-[8px] font-bold shrink-0" title={inv.sent_by_name}>
                             {inv.sent_by_initials || '?'}
                           </span>
                         )}
-                        <Badge className={cn("text-[9px] px-1 py-0", statusConfig[inv.status]?.bg, statusConfig[inv.status]?.text)}>
+                        <Badge className={cn("text-[9px] px-1.5 py-0", statusConfig[inv.status]?.bg, statusConfig[inv.status]?.text)}>
                           {statusConfig[inv.status]?.label || inv.status}
                         </Badge>
                       </div>
+                      {/* Outstanding amount */}
+                      {inv.outstanding > 0 && (
+                        <span className="text-[10px] font-mono text-red-600 font-semibold" title="Outstanding">
+                          {formatCurrency(inv.outstanding)}
+                        </span>
+                      )}
+                      {inv.outstanding === 0 && inv.status !== 'draft' && (
+                        <span className="text-[10px] text-green-600 font-semibold">Paid</span>
+                      )}
                     </div>
                   </div>
                 ))}
