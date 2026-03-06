@@ -715,9 +715,12 @@ async def list_payments(
         if payment.get("invoice_id"):
             invoice = await db.invoices.find_one(
                 {"id": payment["invoice_id"]},
-                {"_id": 0, "invoice_number": 1}
+                {"_id": 0, "invoice_number": 1, "trip_id": 1}
             )
             payment["invoice_number"] = invoice["invoice_number"] if invoice else None
+            payment["trip_id"] = invoice.get("trip_id") if invoice else None
+        else:
+            payment["trip_id"] = None
         
         # Enrich with recorder name (created_by is user_id)
         if payment.get("created_by"):
@@ -915,7 +918,7 @@ async def list_invoices_enhanced(
             "display_status": display_status,
             "client_name": client.get("name") if client else "Unknown",
             "client_phone": client.get("phone") if client else None,
-            "client_whatsapp": client.get("whatsapp") if client else None,
+            "client_whatsapp": (client.get("whatsapp") or client.get("phone")) if client else None,
             "trip_number": trip.get("trip_number") if trip else None,
             "paid_amount": paid_amount,
             "outstanding": inv["total"] - paid_amount,

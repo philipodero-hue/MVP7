@@ -123,6 +123,8 @@ export function Finance() {
   // Payment History state (SESSION T/R)
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
+  const [paymentSearchQuery, setPaymentSearchQuery] = useState('');
+  const [paymentTripFilter, setPaymentTripFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   
   // Currency display
@@ -875,17 +877,6 @@ Servex Holdings`;
                   ))}
                 </SelectContent>
               </Select>
-              {selectedTripId && (
-                <Button
-                  size="sm"
-                  className="h-9 bg-[#6B633C] hover:bg-[#5a5332] text-white"
-                  onClick={handleAutoPopulateInvoices}
-                  disabled={autoPopulating}
-                  data-testid="auto-populate-invoices-btn"
-                >
-                  {autoPopulating ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />Populating...</> : 'Auto-populate Invoices'}
-                </Button>
-              )}
             </div>
 
             {worksheetData && (
@@ -1253,6 +1244,44 @@ Servex Holdings`;
                   {paymentHistoryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                 </Button>
               </CardHeader>
+              {/* Search and Filter Controls */}
+              <div className="px-6 pb-4 flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <Input
+                    placeholder="Search by client, invoice #, amount, reference..."
+                    value={paymentSearchQuery}
+                    onChange={(e) => setPaymentSearchQuery(e.target.value)}
+                    className="pl-8 h-9 text-sm"
+                    data-testid="payment-search-input"
+                  />
+                </div>
+                <Select value={paymentTripFilter} onValueChange={setPaymentTripFilter}>
+                  <SelectTrigger className="w-[220px] h-9 text-sm" data-testid="payment-trip-filter">
+                    <Filter className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                    <SelectValue placeholder="Filter by trip" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Trips</SelectItem>
+                    {trips.map(trip => (
+                      <SelectItem key={trip.id} value={trip.id}>
+                        {trip.trip_number} — {trip.route?.join(' → ') || 'No route'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(paymentSearchQuery || paymentTripFilter !== 'all') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setPaymentSearchQuery(''); setPaymentTripFilter('all'); }}
+                    className="h-9 text-xs text-muted-foreground"
+                    data-testid="clear-payment-filters"
+                  >
+                    <X className="h-3.5 w-3.5 mr-1" /> Clear filters
+                  </Button>
+                )}
+              </div>
               <CardContent className="p-0">
                 {paymentHistoryLoading ? (
                   <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -1261,7 +1290,32 @@ Servex Holdings`;
                     <CreditCard className="h-10 w-10 mx-auto mb-3 opacity-30" />
                     <p>No payments recorded yet</p>
                   </div>
-                ) : (
+                ) : (() => {
+                  const q = paymentSearchQuery.toLowerCase();
+                  const filtered = paymentHistory.filter(p => {
+                    const matchesSearch = !q || [
+                      p.client_name,
+                      p.invoice_number,
+                      String(p.amount),
+                      p.reference,
+                      p.payment_method,
+                      p.recorded_by_name,
+                      p.notes
+                    ].some(field => field && field.toLowerCase().includes(q));
+                    const matchesTrip = paymentTripFilter === 'all' || p.trip_id === paymentTripFilter;
+                    return matchesSearch && matchesTrip;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-10 text-muted-foreground">
+                        <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                        <p>No payments match your search</p>
+                      </div>
+                    );
+                  }
+
+                  return (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1278,7 +1332,7 @@ Servex Holdings`;
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paymentHistory.map((payment) => (
+                        {filtered.map((payment) => (
                           <TableRow key={payment.id} data-testid={`payment-row-${payment.id}`}>
                             <TableCell className="text-sm font-mono">{payment.payment_date}</TableCell>
                             <TableCell>
@@ -1308,7 +1362,8 @@ Servex Holdings`;
                       </TableBody>
                     </Table>
                   </div>
-                )}
+                  );
+                })()}
               </CardContent>
             </Card>
           </TabsContent>

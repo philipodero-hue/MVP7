@@ -55,7 +55,7 @@ import { toast } from 'sonner';
 import { 
   Package, Camera, Plus, Trash2, Printer, Check, ChevronsUpDown,
   MoreVertical, Eye, Tag, FileText, Upload, Image as ImageIcon, X, Save,
-  AlertTriangle, XCircle, UserPlus, Loader2
+  AlertTriangle, XCircle, UserPlus, Loader2, Truck
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -906,15 +906,49 @@ export function ParcelIntake() {
       <div className="flex flex-col h-[calc(100vh-64px)]" data-testid="parcel-intake-page">
         {/* TOP SECTION - Compact */}
         <div className="px-4 py-3 bg-white border-b">
-          {/* Header */}
-          <div className="mb-2">
-            <h1 className="text-xl font-bold text-[#3C3F42] flex items-center gap-2">
-              <Package className="h-5 w-5 text-[#6B633C]" />
-              Parcel Intake
-            </h1>
-            <p className="text-gray-500 text-xs mt-0.5">
-              Quick bulk parcel registration with keyboard shortcuts • <span className="text-[#6B633C]">Ctrl+S to save</span>
-            </p>
+          {/* Header with Action Buttons */}
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-[#3C3F42] flex items-center gap-2">
+                <Package className="h-5 w-5 text-[#6B633C]" />
+                Parcel Intake
+              </h1>
+              <p className="text-gray-500 text-xs mt-0.5">
+                Quick bulk parcel registration with keyboard shortcuts • <span className="text-[#6B633C]">Ctrl+S to save</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleSaveAllAndPrint}
+                disabled={saving}
+                data-testid="save-all-print-btn"
+                size="sm"
+              >
+                <Printer className="h-4 w-4 mr-1.5" />
+                {saving ? 'Saving...' : `Save All & Print Labels (${rows.filter(r => r.description.trim()).length})`}
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleSaveAll}
+                disabled={saving}
+                data-testid="save-all-btn"
+                size="sm"
+              >
+                <Save className="h-4 w-4 mr-1.5" />
+                {saving ? 'Saving...' : 'Save All Only'}
+              </Button>
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleClearAll}
+                disabled={!hasUnsavedData()}
+                data-testid="clear-all-btn"
+                size="sm"
+              >
+                <XCircle className="h-4 w-4 mr-1.5" />
+                Clear All
+              </Button>
+            </div>
           </div>
 
           {/* Three dropdowns */}
@@ -1432,46 +1466,6 @@ export function ParcelIntake() {
           </Card>
         </div>
 
-        {/* Bottom action bar */}
-        <div className="p-4 bg-white border-t flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
-              onClick={handleSaveAllAndPrint}
-              disabled={saving}
-              data-testid="save-all-print-btn"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : `Save All & Print Labels (${rows.filter(r => r.description.trim()).length})`}
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={handleSaveAll}
-              disabled={saving}
-              data-testid="save-all-btn"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : 'Save All Only'}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleClearAll}
-              disabled={!hasUnsavedData()}
-              className="text-gray-600 border-gray-300 hover:bg-gray-50"
-              data-testid="clear-all-btn"
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Clear All
-            </Button>
-          </div>
-          
-          <Button variant="outline" disabled>
-            <Printer className="h-4 w-4 mr-2" /> Print All Labels
-          </Button>
-        </div>
-
         {/* Photo Upload Dialog */}
         <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
           <DialogContent>
@@ -1731,70 +1725,6 @@ export function ParcelIntake() {
                 Add New Client
               </DialogTitle>
             </DialogHeader>
-
-        {/* Create Trip Modal */}
-        <Dialog open={createTripOpen} onOpenChange={setCreateTripOpen}>
-          <DialogContent className="max-w-md" data-testid="create-trip-modal">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <svg className="h-5 w-5 text-[#6B633C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                Create New Trip
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div>
-                <Label className="text-sm font-medium">Route Destinations <span className="text-red-500">*</span></Label>
-                <p className="text-xs text-muted-foreground mb-1">Enter destinations separated by commas (e.g. Nairobi, Mombasa)</p>
-                <Input
-                  value={createTripData.route_input}
-                  onChange={e => setCreateTripData(p => ({ ...p, route_input: e.target.value }))}
-                  placeholder="Nairobi, Mombasa, Dar es Salaam"
-                  data-testid="create-trip-route-input"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-sm font-medium">Vehicle (optional)</Label>
-                  <Input
-                    value={createTripData.vehicle}
-                    onChange={e => setCreateTripData(p => ({ ...p, vehicle: e.target.value }))}
-                    placeholder="e.g. KBZ 123A"
-                    data-testid="create-trip-vehicle-input"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Driver (optional)</Label>
-                  <Input
-                    value={createTripData.driver}
-                    onChange={e => setCreateTripData(p => ({ ...p, driver: e.target.value }))}
-                    placeholder="Driver name"
-                    data-testid="create-trip-driver-input"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Notes (optional)</Label>
-                <Input
-                  value={createTripData.notes}
-                  onChange={e => setCreateTripData(p => ({ ...p, notes: e.target.value }))}
-                  placeholder="Any trip notes..."
-                  data-testid="create-trip-notes-input"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateTripOpen(false)}>Cancel</Button>
-              <Button
-                onClick={handleCreateTrip}
-                disabled={createTripLoading || !createTripData.route_input.trim()}
-                className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
-                data-testid="create-trip-submit-btn"
-              >
-                {createTripLoading ? 'Creating...' : 'Create Trip & Select'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
             <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
               {/* SESSION 6: Added all fields from Clients page */}
               <div>
@@ -2150,6 +2080,70 @@ export function ParcelIntake() {
                     Add Recipient
                   </>
                 )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Trip Modal */}
+        <Dialog open={createTripOpen} onOpenChange={setCreateTripOpen}>
+          <DialogContent className="max-w-md" data-testid="create-trip-modal">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-[#6B633C]" />
+                Create New Trip
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div>
+                <Label className="text-sm font-medium">Route Destinations <span className="text-red-500">*</span></Label>
+                <p className="text-xs text-muted-foreground mb-1">Enter destinations separated by commas (e.g. Nairobi, Mombasa)</p>
+                <Input
+                  value={createTripData.route_input}
+                  onChange={e => setCreateTripData(p => ({ ...p, route_input: e.target.value }))}
+                  placeholder="Nairobi, Mombasa, Dar es Salaam"
+                  data-testid="create-trip-route-input"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm font-medium">Vehicle (optional)</Label>
+                  <Input
+                    value={createTripData.vehicle}
+                    onChange={e => setCreateTripData(p => ({ ...p, vehicle: e.target.value }))}
+                    placeholder="e.g. KBZ 123A"
+                    data-testid="create-trip-vehicle-input"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Driver (optional)</Label>
+                  <Input
+                    value={createTripData.driver}
+                    onChange={e => setCreateTripData(p => ({ ...p, driver: e.target.value }))}
+                    placeholder="Driver name"
+                    data-testid="create-trip-driver-input"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Notes (optional)</Label>
+                <Input
+                  value={createTripData.notes}
+                  onChange={e => setCreateTripData(p => ({ ...p, notes: e.target.value }))}
+                  placeholder="Any trip notes..."
+                  data-testid="create-trip-notes-input"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateTripOpen(false)}>Cancel</Button>
+              <Button
+                onClick={handleCreateTrip}
+                disabled={createTripLoading || !createTripData.route_input.trim()}
+                className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
+                data-testid="create-trip-submit-btn"
+              >
+                {createTripLoading ? 'Creating...' : 'Create Trip & Select'}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -46,6 +46,11 @@ const API = `${window.location.origin}/api`;
 
 const roleColors = {
   owner: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  tier_1: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  tier_2: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  tier_3: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  tier_4: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  tier_5: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
   manager: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   warehouse: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   finance: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -60,12 +65,29 @@ const statusColors = {
 
 // Role templates with default permissions
 const roleTemplates = [
-  { id: 'Owner', label: 'Owner', description: 'Full access to all features' },
-  { id: 'Manager', label: 'Manager', description: 'Access to most features except settings' },
-  { id: 'Warehouse', label: 'Warehouse', description: 'Parcel intake, warehouse, loading' },
-  { id: 'Finance', label: 'Finance', description: 'Dashboard, clients, finance' },
-  { id: 'Driver', label: 'Driver', description: 'Dashboard and trips only' },
+  { id: 'Owner', label: 'Tier 1 (Admin)', description: 'Full access to all features' },
+  { id: 'Manager', label: 'Tier 2 (Manager)', description: 'Access to most features except settings' },
+  { id: 'Warehouse', label: 'Tier 3 (Operations)', description: 'Parcel intake, warehouse, loading' },
+  { id: 'Finance', label: 'Tier 4 (Finance)', description: 'Dashboard, clients, finance' },
+  { id: 'Driver', label: 'Tier 5 (View Only)', description: 'Dashboard and trips only' },
 ];
+
+// Helper to get tier display name from role value
+const getRoleDisplayName = (role) => {
+  const map = {
+    owner: 'Tier 1 (Admin)',
+    tier_1: 'Tier 1 (Admin)',
+    tier_2: 'Tier 2 (Manager)',
+    tier_3: 'Tier 3 (Operations)',
+    tier_4: 'Tier 4 (Finance)',
+    tier_5: 'Tier 5 (View Only)',
+    manager: 'Tier 2 (Manager)',
+    warehouse: 'Tier 3 (Operations)',
+    finance: 'Tier 4 (Finance)',
+    driver: 'Tier 5 (View Only)',
+  };
+  return map[role] || role;
+};
 
 export function Team() {
   const { user: currentUser } = useAuth();
@@ -79,7 +101,7 @@ export function Team() {
     name: '',
     email: '',
     password: '',
-    role: 'warehouse',
+    role: 'tier_3',
     role_title: '',
     role_template: 'Warehouse',
     phone: '',
@@ -349,11 +371,12 @@ export function Team() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="owner">Owner</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="warehouse">Warehouse</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="driver">Driver</SelectItem>
+                      <SelectItem value="owner">Tier 1 (Admin)</SelectItem>
+                      <SelectItem value="tier_1">Tier 1 (Admin)</SelectItem>
+                      <SelectItem value="tier_2">Tier 2 (Manager)</SelectItem>
+                      <SelectItem value="tier_3">Tier 3 (Operations)</SelectItem>
+                      <SelectItem value="tier_4">Tier 4 (Finance)</SelectItem>
+                      <SelectItem value="tier_5">Tier 5 (View Only)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -493,7 +516,7 @@ export function Team() {
                       <TableCell>
                         <div className="space-y-1">
                           <Badge className={cn('border-0', roleColors[user.role])}>
-                            {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
+                            {getRoleDisplayName(user.role)}
                           </Badge>
                           {user.role_title && (
                             <p className="text-xs text-muted-foreground">{user.role_title}</p>

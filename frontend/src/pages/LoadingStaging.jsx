@@ -534,21 +534,18 @@ export function LoadingStaging() {
       <div className="space-y-6" data-testid="loading-page">
         {/* Header with Centered Tabs */}
         <div className="flex flex-col items-center gap-4">
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <Truck className="h-7 w-7" style={{ color: '#785E3D' }} />
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold flex items-center gap-2 text-[#3C3F42]">
+            <Truck className="h-7 w-7 text-[#6B633C]" />
             Loading & Unloading
           </h1>
           
-          {/* Centered Mode Toggle */}
+          {/* Centered Mode Toggle - match Finance dark tabs */}
           <Tabs value={mode} onValueChange={setMode} className="w-auto">
-            <TabsList style={{ backgroundColor: '#3D3D3E' }} className="border-slate-600">
+            <TabsList style={{ backgroundColor: '#3C3F42' }} className="p-1.5 rounded-lg">
               <TabsTrigger 
                 value="loading" 
                 data-testid="loading-mode-btn"
-                style={{
-                  color: mode === 'loading' ? '#FFFFFF' : '#A09791',
-                  backgroundColor: mode === 'loading' ? '#785E3D' : 'transparent'
-                }}
+                className="data-[state=active]:bg-[#E8DC88] data-[state=active]:text-[#3C3F42] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-white/80 hover:text-white px-4 py-2 text-sm transition-colors"
               >
                 <Package className="h-4 w-4 mr-2" />
                 Loading
@@ -556,10 +553,7 @@ export function LoadingStaging() {
               <TabsTrigger 
                 value="unloading" 
                 data-testid="unloading-mode-btn"
-                style={{
-                  color: mode === 'unloading' ? '#FFFFFF' : '#A09791',
-                  backgroundColor: mode === 'unloading' ? '#785E3D' : 'transparent'
-                }}
+                className="data-[state=active]:bg-[#E8DC88] data-[state=active]:text-[#3C3F42] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-white/80 hover:text-white px-4 py-2 text-sm transition-colors"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Unloading
@@ -658,8 +652,7 @@ export function LoadingStaging() {
                     <Button
                       onClick={handleMarkTruckLoaded}
                       disabled={!selectedTrip || truckCount === 0}
-                      style={{ backgroundColor: '#785E3D', color: '#FFFFFF' }}
-                      className="hover:opacity-90"
+                      className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
                       data-testid="mark-loaded-btn"
                     >
                       <Lock className="h-4 w-4 mr-2" />
@@ -679,8 +672,7 @@ export function LoadingStaging() {
                   <Button
                     onClick={handleMarkDelivered}
                     disabled={!selectedTrip || inTransitCount > 0}
-                    style={{ backgroundColor: '#785E3D', color: '#FFFFFF' }}
-                    className="hover:opacity-90"
+                    className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
                     data-testid="mark-delivered-btn"
                   >
                     <Lock className="h-4 w-4 mr-2" />
@@ -694,23 +686,22 @@ export function LoadingStaging() {
 
         {/* Progress Bar */}
         {selectedTrip && mode === 'loading' && (
-          <Card className="mt-4" style={{ backgroundColor: '#EDEAE5', borderColor: '#DCD29E' }}>
+          <Card className="mt-4" style={{ backgroundColor: '#f5f5f0', borderColor: '#E8DC88' }}>
             <CardContent className="py-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="font-medium" style={{ color: '#3D3D3E' }}>Loading Progress</span>
-                  <span className="font-bold" style={{ color: '#785E3D' }}>{truckCount} / {totalCount}</span>
+                  <span className="font-medium text-[#3C3F42]">Loading Progress</span>
+                  <span className="font-bold text-[#6B633C]">{truckCount} / {totalCount}</span>
                 </div>
-                <div className="w-full rounded-full h-3 overflow-hidden" style={{ backgroundColor: '#DCD29E' }}>
+                <div className="w-full rounded-full h-3 overflow-hidden" style={{ backgroundColor: '#E8DC88' }}>
                   <div 
-                    className="h-full transition-all duration-300 rounded-full"
+                    className="h-full transition-all duration-300 rounded-full bg-[#6B633C]"
                     style={{ 
-                      backgroundColor: '#785E3D',
                       width: `${totalCount > 0 ? (truckCount / totalCount * 100) : 0}%`
                     }}
                   />
                 </div>
-                <p className="text-xs text-center" style={{ color: '#78736B' }}>
+                <p className="text-xs text-center text-[#3C3F42]/60">
                   {totalCount > 0 ? Math.round((truckCount / totalCount) * 100) : 0}% Complete
                 </p>
               </div>
@@ -724,13 +715,13 @@ export function LoadingStaging() {
             {mode === 'loading' ? (
               <>
                 <span className="text-gray-500">Ready: <span className="font-bold text-gray-900">{warehouseCount}</span> <span className="text-gray-400">({warehouseWeight.toFixed(1)} kg)</span></span>
-                <span className="text-[#785E3D]">Loaded: <span className="font-bold">{truckCount}</span> <span className="text-gray-400">({truckWeight.toFixed(1)} kg)</span></span>
+                <span className="text-[#6B633C]">Loaded: <span className="font-bold">{truckCount}</span> <span className="text-gray-400">({truckWeight.toFixed(1)} kg)</span></span>
                 <span className="text-gray-500">Total: <span className="font-bold text-gray-900">{totalCount}</span> <span className="text-gray-400">({(warehouseWeight + truckWeight).toFixed(1)} kg)</span></span>
               </>
             ) : (
               <>
                 <span className="text-gray-500">In Transit: <span className="font-bold text-gray-900">{inTransitCount}</span> <span className="text-gray-400">({inTransitWeight.toFixed(1)} kg)</span></span>
-                <span className="text-[#785E3D]">Arrived: <span className="font-bold">{arrivedCount}</span> <span className="text-gray-400">({arrivedWeight.toFixed(1)} kg)</span></span>
+                <span className="text-[#6B633C]">Arrived: <span className="font-bold">{arrivedCount}</span> <span className="text-gray-400">({arrivedWeight.toFixed(1)} kg)</span></span>
                 <span className="text-gray-500">Total: <span className="font-bold text-gray-900">{inTransitCount + arrivedCount}</span> <span className="text-gray-400">({(inTransitWeight + arrivedWeight).toFixed(1)} kg)</span></span>
               </>
             )}
@@ -744,18 +735,17 @@ export function LoadingStaging() {
               <>
                 {/* Ready to Load Table (Left) */}
                 <Card>
-                  <CardHeader style={{ backgroundColor: '#3D3D3E' }} className="border-b flex flex-row items-center justify-between py-3 px-4">
+                  <CardHeader style={{ backgroundColor: '#3C3F42' }} className="border-b flex flex-row items-center justify-between py-3 px-4 rounded-t-lg">
                     <CardTitle className="flex items-center gap-2 text-white">
                       <WarehouseIcon className="h-5 w-5" />
                       Ready to Load
-                      <Badge variant="secondary" style={{ backgroundColor: '#785E3D', color: '#FFFFFF' }} className="ml-2">{warehouseCount}</Badge>
+                      <Badge variant="secondary" className="ml-2 bg-[#E8DC88] text-[#3C3F42]">{warehouseCount}</Badge>
                     </CardTitle>
                     <Button
                       size="sm"
                       onClick={handleMoveToTruck}
                       disabled={selectedWarehouseParcels.size === 0 || moving}
-                      style={{ backgroundColor: '#785E3D', color: '#FFFFFF' }}
-                      className="hover:opacity-90"
+                      className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
                     >
                       {moving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
                       Load Selected ({selectedWarehouseParcels.size})
@@ -778,11 +768,11 @@ export function LoadingStaging() {
 
                 {/* Loaded Table (Right) */}
                 <Card>
-                  <CardHeader style={{ backgroundColor: '#3D3D3E' }} className="border-b flex flex-row items-center justify-between py-3 px-4">
+                  <CardHeader style={{ backgroundColor: '#3C3F42' }} className="border-b flex flex-row items-center justify-between py-3 px-4 rounded-t-lg">
                     <CardTitle className="flex items-center gap-2 text-white">
                       <Truck className="h-5 w-5" />
                       Loaded
-                      <Badge variant="secondary" style={{ backgroundColor: '#785E3D', color: '#FFFFFF' }} className="ml-2">{truckCount}</Badge>
+                      <Badge variant="secondary" className="ml-2 bg-[#E8DC88] text-[#3C3F42]">{truckCount}</Badge>
                     </CardTitle>
                     <Button
                       size="sm"
@@ -813,17 +803,17 @@ export function LoadingStaging() {
               <>
                 {/* In Transit Table (Left - Unloading Mode) */}
                 <Card>
-                  <CardHeader className="bg-blue-50 border-b flex flex-row items-center justify-between py-3 px-4">
-                    <CardTitle className="flex items-center gap-2 text-blue-800">
+                  <CardHeader style={{ backgroundColor: '#3C3F42' }} className="border-b flex flex-row items-center justify-between py-3 px-4 rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2 text-white">
                       <Truck className="h-5 w-5" />
                       In Transit
-                      <Badge variant="secondary" className="ml-2">{inTransitCount}</Badge>
+                      <Badge variant="secondary" className="ml-2 bg-[#E8DC88] text-[#3C3F42]">{inTransitCount}</Badge>
                     </CardTitle>
                     <Button
                       size="sm"
                       onClick={handleMarkArrived}
                       disabled={selectedInTransitParcels.size === 0 || moving}
-                      className="bg-[#3C3F42] hover:bg-[#2A2C2E]"
+                      className="bg-[#6B633C] hover:bg-[#5a5332] text-white"
                     >
                       {moving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
                       Mark Arrived ({selectedInTransitParcels.size})
@@ -845,11 +835,11 @@ export function LoadingStaging() {
 
                 {/* Arrived Table (Right - Unloading Mode) */}
                 <Card>
-                  <CardHeader className="bg-green-50 border-b flex flex-row items-center justify-between py-3 px-4">
-                    <CardTitle className="flex items-center gap-2 text-green-800">
+                  <CardHeader style={{ backgroundColor: '#3C3F42' }} className="border-b flex flex-row items-center justify-between py-3 px-4 rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2 text-white">
                       <Package className="h-5 w-5" />
                       Arrived
-                      <Badge variant="secondary" className="ml-2">{arrivedCount}</Badge>
+                      <Badge variant="secondary" className="ml-2 bg-[#E8DC88] text-[#3C3F42]">{arrivedCount}</Badge>
                     </CardTitle>
                     <Button
                       size="sm"

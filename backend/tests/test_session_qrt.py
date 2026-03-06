@@ -3,7 +3,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = "https://no-session-s.preview.emergentagent.com"
+BASE_URL = "https://tier-system-update.preview.emergentagent.com"
 
 @pytest.fixture(scope="module")
 def session():
