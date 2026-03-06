@@ -52,13 +52,14 @@ Multi-tenant logistics SaaS for African freight companies. Implement Sessions Q,
 - ✅ **Invoice Totals Row** - TOTALS row with QTY, Weight, Vol Wt, Ship Wt, Amount
 - ✅ **Scrollbar Colors** - Dark gray `#3C3F42` with `!important`
 
-### Bug Fixes (2026-03-06)
-- ✅ **CSV Import Column Parser** - Header-based parsing: correctly handles `Sent By, Primary Recipient, Description, QTY, KG, L, W, H` format
-- ✅ **Rate Rounding** - `shipWeight` rounded to 2dp before `× rate` (25.22 × 36 = 907.92 not 907.80)
-- ✅ **Finance Tabs Order** - Invoices | Client Statements | Trip Worksheets | Overdue | Payment History
-- ✅ **Payment History Tab** - New tab in Finance showing all payments with recorder name, time, invoice, method
-- ✅ **Barcode in Warehouse** - Column now shows `parcel.barcode` (SX format) not `parcel.id.slice(0,8)`
-- ✅ **Barcode Migration** - Endpoint `/data/migrate-barcodes` retroactively assigned SX barcodes to 1080 existing parcels
+### Bug Fixes Round 2 (2026-03-06)
+- ✅ **Create Trip button** - Added "+" button in ParcelIntake below trip selector → opens modal with route, vehicle, driver, notes → creates trip via API → auto-selects it
+- ✅ **Invoice "Finalized" status** - Finalize endpoint now sets `status: "finalized"`, not `"sent"`. 46 existing invoices migrated. Reopen endpoint handles finalized+sent+overdue.
+- ✅ **Outstanding amount in invoice list** - Invoice list items restructured: Client Name / Invoice # (top row), Team Member + Status badge + Outstanding (red) (bottom row)
+- ✅ **Overpayment allowed** - Removed `if amount > outstanding: raise HTTPException` check. Clients can overpay.
+- ✅ **Client statements auto-refresh** - `useEffect([activeTab])` now triggers `fetchStatements()` when switching to statements tab
+- ✅ **Login page dark theme** - Background: `#3C3F42`, Sign In button: `#E8DC88` golden, text: white. Matches Finance tabs.
+- ✅ **Barcode wider** - `barWidth` increased from `0.6` to `1.2` in pdf_service.py (bars now ~0.42mm, exceeds 0.25mm scanner minimum)
 
 ---
 
