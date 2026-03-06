@@ -626,25 +626,76 @@ export function Settings() {
         return;
       }
       
-      // Detect headers
+      // Detect headers from first line
       const firstLine = lines[0].toLowerCase();
       const hasHeaders = firstLine.includes('sent by') || firstLine.includes('description');
       
-      const dataLines = hasHeaders ? lines.slice(1) : lines;
-      const parcels = dataLines.map(line => {
-        const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
-        return {
-          sent_by: parts[0] || '',
-          primary_recipient: parts[1] || '',
-          secondary_recipient: parts[2] || '',
-          description: parts[3] || '',
-          length: parseFloat(parts[4]) || 0,
-          width: parseFloat(parts[5]) || 0,
-          height: parseFloat(parts[6]) || 0,
-          weight: parseFloat(parts[7]) || 0,
-          qty: parseInt(parts[8]) || 1
+      // Build header-to-index mapping from the actual CSV headers
+      let colMap = null;
+      if (hasHeaders) {
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+        colMap = {
+          sent_by: headers.findIndex(h => h === 'sent by'),
+          primary_recipient: headers.findIndex(h => h.includes('primary') || h === 'recipient'),
+          secondary_recipient: headers.findIndex(h => h.includes('secondary')),
+          description: headers.findIndex(h => h === 'description'),
+          qty: headers.findIndex(h => h === 'qty' || h === 'quantity'),
+          kg: headers.findIndex(h => h === 'kg' || h === 'weight'),
+          l: headers.findIndex(h => h === 'l' || h === 'length'),
+          w: headers.findIndex(h => h === 'w' || h === 'width'),
+          h: headers.findIndex(h => h === 'h' || h === 'height'),
         };
-      }).filter(p => p.sent_by && p.weight > 0);
+      }
+      
+      const dataLines = hasHeaders ? lines.slice(1) : lines;
+      
+      // Smart CSV split respecting quoted commas
+      const splitCSVLine = (line) => {
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') { inQuotes = !inQuotes; }
+          else if (ch === ',' && !inQuotes) { result.push(cur.trim()); cur = ''; }
+          else { cur += ch; }
+        }
+        result.push(cur.trim());
+        return result;
+      };
+      
+      const parcels = dataLines.map(line => {
+        const parts = splitCSVLine(line);
+        
+        // Use header-mapped indices if available, else fall back to positional
+        if (colMap) {
+          const get = (idx) => idx >= 0 ? (parts[idx] || '').trim().replace(/^"|"$/g, '') : '';
+          return {
+            sent_by: get(colMap.sent_by),
+            primary_recipient: get(colMap.primary_recipient),
+            secondary_recipient: colMap.secondary_recipient >= 0 ? get(colMap.secondary_recipient) : '',
+            description: get(colMap.description),
+            qty: parseInt(get(colMap.qty)) || 1,
+            weight: parseFloat(get(colMap.kg)) || 0,
+            length: parseFloat(get(colMap.l)) || 0,
+            width: parseFloat(get(colMap.w)) || 0,
+            height: parseFloat(get(colMap.h)) || 0,
+          };
+        } else {
+          // Positional fallback (legacy 9-col format)
+          return {
+            sent_by: parts[0] || '',
+            primary_recipient: parts[1] || '',
+            secondary_recipient: parts[2] || '',
+            description: parts[3] || '',
+            qty: parseInt(parts[8]) || 1,
+            weight: parseFloat(parts[7]) || 0,
+            length: parseFloat(parts[4]) || 0,
+            width: parseFloat(parts[5]) || 0,
+            height: parseFloat(parts[6]) || 0,
+          };
+        }
+      }).filter(p => p.sent_by && p.weight > 0 && p.description);
       
       // Calculate total parcels (accounting for QTY > 1)
       const totalParcels = parcels.reduce((sum, p) => sum + p.qty, 0);

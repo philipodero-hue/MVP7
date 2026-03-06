@@ -42,7 +42,7 @@ import { toast } from 'sonner';
 import { 
   Search, Mail, Download, ChevronDown, ChevronRight, MoreVertical,
   FileText, Users, AlertTriangle, Receipt, CheckCircle, Clock,
-  AlertCircle, Send, Loader2, X, MessageCircle, RefreshCw, Filter
+  AlertCircle, Send, Loader2, X, MessageCircle, RefreshCw, Filter, CreditCard
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
@@ -118,7 +118,11 @@ function InlineComment({ invoiceId, initialComment }) {
 }
 
 export function Finance() {
-  const [activeTab, setActiveTab] = useState('statements');
+  const [activeTab, setActiveTab] = useState('invoices');  // Default to Invoices tab first
+
+  // Payment History state (SESSION T/R)
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // Currency display
@@ -220,6 +224,7 @@ export function Finance() {
     fetchTrips();
     fetchStatements();
     fetchOverdue();
+    fetchPaymentHistory();
   }, []);
 
   // Refetch overdue when filters change
@@ -288,6 +293,19 @@ export function Finance() {
       setOverdueData(response.data);
     } catch (error) {
       console.error('Failed to fetch overdue:', error);
+    }
+  };
+
+  // SESSION T: Fetch payment history
+  const fetchPaymentHistory = async () => {
+    setPaymentHistoryLoading(true);
+    try {
+      const response = await axios.get(`${API}/payments`, { withCredentials: true });
+      setPaymentHistory(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch payment history:', error);
+    } finally {
+      setPaymentHistoryLoading(false);
     }
   };
 
@@ -596,7 +614,15 @@ Servex Holdings`;
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList style={{ backgroundColor: '#3C3F42' }} className="grid w-full grid-cols-4 gap-2 p-2 rounded-lg h-auto">
+          <TabsList style={{ backgroundColor: '#3C3F42' }} className="grid w-full grid-cols-5 gap-2 p-2 rounded-lg h-auto">
+            <TabsTrigger 
+              value="invoices"
+              className="data-[state=active]:bg-[#E8DC88] data-[state=active]:text-[#3C3F42] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-white/80 hover:text-white whitespace-nowrap px-4 py-3 text-sm transition-colors"
+              data-testid="tab-invoices"
+            >
+              <Receipt className="h-4 w-4 mr-2 shrink-0" />
+              <span>Invoices</span>
+            </TabsTrigger>
             <TabsTrigger 
               value="statements" 
               className="data-[state=active]:bg-[#E8DC88] data-[state=active]:text-[#3C3F42] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-white/80 hover:text-white whitespace-nowrap px-4 py-3 text-sm transition-colors"
@@ -622,12 +648,12 @@ Servex Holdings`;
               <span>Overdue ({overdueData.count})</span>
             </TabsTrigger>
             <TabsTrigger 
-              value="invoices"
+              value="payment-history"
               className="data-[state=active]:bg-[#E8DC88] data-[state=active]:text-[#3C3F42] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-white/80 hover:text-white whitespace-nowrap px-4 py-3 text-sm transition-colors"
-              data-testid="tab-invoices"
+              data-testid="tab-payment-history"
             >
-              <Receipt className="h-4 w-4 mr-2 shrink-0" />
-              <span>Invoices</span>
+              <CreditCard className="h-4 w-4 mr-2 shrink-0" />
+              <span>Payment History</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1206,6 +1232,78 @@ Servex Holdings`;
           {/* ========== TAB 4: INVOICE DETAILS ========== */}
           <TabsContent value="invoices" className="mt-6">
             <InvoiceEditor />
+          </TabsContent>
+
+          {/* ========== TAB 5: PAYMENT HISTORY ========== */}
+          <TabsContent value="payment-history" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Payment History</CardTitle>
+                  <CardDescription>All payments recorded, including who recorded them and when</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={fetchPaymentHistory} disabled={paymentHistoryLoading} data-testid="refresh-payment-history-btn">
+                  {paymentHistoryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                {paymentHistoryLoading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+                ) : paymentHistory.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <CreditCard className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p>No payments recorded yet</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>Date</TableHead>
+                          <TableHead>Invoice</TableHead>
+                          <TableHead>Client</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead>Method</TableHead>
+                          <TableHead>Reference</TableHead>
+                          <TableHead>Recorded By</TableHead>
+                          <TableHead>Recorded At</TableHead>
+                          <TableHead>Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paymentHistory.map((payment) => (
+                          <TableRow key={payment.id} data-testid={`payment-row-${payment.id}`}>
+                            <TableCell className="text-sm font-mono">{payment.payment_date}</TableCell>
+                            <TableCell>
+                              {payment.invoice_number ? (
+                                <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{payment.invoice_number}</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">{payment.client_name}</TableCell>
+                            <TableCell className="text-right font-mono font-semibold text-green-700">
+                              {formatCurrency(payment.amount, displayCurrency, exchangeRates)}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-xs capitalize bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                                {(payment.payment_method || 'bank_transfer').replace(/_/g, ' ')}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{payment.reference || '—'}</TableCell>
+                            <TableCell className="text-sm font-medium">{payment.recorded_by_name || '—'}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {payment.created_at ? new Date(payment.created_at).toLocaleString() : '—'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{payment.notes || '—'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 

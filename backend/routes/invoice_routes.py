@@ -699,14 +699,14 @@ async def list_payments(
     client_id: Optional[str] = None,
     tenant_id: str = Depends(get_tenant_id)
 ):
-    """List all payments"""
+    """List all payments with client, invoice, and recorder info"""
     query = {"tenant_id": tenant_id}
     if client_id:
         query["client_id"] = client_id
     
     payments = await db.payments.find(query, {"_id": 0}).sort("payment_date", -1).to_list(2000)
     
-    # Enrich with client and invoice info
+    # Enrich with client, invoice, and recorder info
     for payment in payments:
         client = await db.clients.find_one({"id": payment["client_id"]}, {"_id": 0, "name": 1})
         payment["client_name"] = client["name"] if client else "Unknown"
@@ -717,6 +717,15 @@ async def list_payments(
                 {"_id": 0, "invoice_number": 1}
             )
             payment["invoice_number"] = invoice["invoice_number"] if invoice else None
+        
+        # Enrich with recorder name (created_by is user_id)
+        if payment.get("created_by"):
+            recorder = await db.users.find_one({"id": payment["created_by"]}, {"_id": 0, "name": 1, "email": 1})
+            if not recorder:
+                recorder = await db.team_members.find_one({"id": payment["created_by"]}, {"_id": 0, "name": 1, "email": 1})
+            payment["recorded_by_name"] = recorder["name"] if recorder else payment.get("created_by", "Unknown")
+        else:
+            payment["recorded_by_name"] = "System"
     
     return payments
 
@@ -1234,8 +1243,8 @@ async def auto_populate_trip_invoices(
         for parcel in parcels:
             weight = float(parcel.get("total_weight") or parcel.get("shipping_weight") or 1)
             lc, wc, hc = parcel.get("length_cm") or 0, parcel.get("width_cm") or 0, parcel.get("height_cm") or 0
-            vol = (lc * wc * hc / 5000) if lc and wc and hc else 0
-            ship_weight = max(weight, vol)
+            vol = round((lc * wc * hc / 5000), 2) if lc and wc and hc else 0
+            ship_weight = round(max(weight, vol), 2)  # Round to 2dp BEFORE multiplying
             amount = round(ship_weight * rate, 2)
             subtotal += amount
 

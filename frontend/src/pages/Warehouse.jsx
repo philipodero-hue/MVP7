@@ -1459,7 +1459,7 @@ export function Warehouse() {
                                 className="font-mono text-sm text-primary hover:underline font-medium"
                                 data-testid={`parcel-id-${parcel.id}`}
                               >
-                                {parcel.id.slice(0, 8).toUpperCase()}
+                                {parcel.barcode || parcel.id.slice(0, 8).toUpperCase()}
                               </button>
                             </div>
                             {parcel.parcel_sequence && parcel.total_in_sequence && (

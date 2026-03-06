@@ -143,6 +143,7 @@ export function InvoiceEditor() {
   const [selectedLineItems, setSelectedLineItems] = useState(new Set());
   const [batchRateDialogOpen, setBatchRateDialogOpen] = useState(false);
   const [batchRate, setBatchRate] = useState('');
+  const [consolidateItems, setConsolidateItems] = useState(false); // SESSION Q: Consolidate identical items
   
   // Reverse calculator
   const [targetTotal, setTargetTotal] = useState('');
@@ -324,6 +325,26 @@ export function InvoiceEditor() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  // SESSION Q: Consolidate identical line items for display
+  const displayedLineItems = useMemo(() => {
+    if (!consolidateItems) return lineItems;
+    const groups = new Map();
+    for (const item of lineItems) {
+      // Group by description + rate + weight (round weight to avoid float keys)
+      const key = `${item.description}|||${item.rate}|||${parseFloat(item.weight || item.quantity || 0).toFixed(2)}`;
+      if (groups.has(key)) {
+        const g = groups.get(key);
+        g._count++;
+        g.quantity = (g.quantity || 1) + 1;
+        g.amount = parseFloat((g.amount + (parseFloat(item.amount) || 0)).toFixed(2));
+        g._ids.push(item.id);
+      } else {
+        groups.set(key, { ...item, _count: 1, _ids: [item.id], quantity: parseInt(item.quantity) || 1 });
+      }
+    }
+    return Array.from(groups.values());
+  }, [lineItems, consolidateItems]);
+
   // Calculate totals with validation
   const totals = useMemo(() => {
     const subtotal = lineItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
@@ -443,11 +464,11 @@ export function InvoiceEditor() {
       const actualWeight = parseFloat(item.weight) || 0;
       const lc = item.length_cm || 0, wc = item.width_cm || 0, hc = item.height_cm || 0;
       const volWeight = lc && wc && hc ? (lc * wc * hc) / 5000 : 0;
-      const shipWeight = Math.max(actualWeight, volWeight);
+      const shipWeight = Math.round(Math.max(actualWeight, volWeight) * 100) / 100; // Round to 2dp
       return {
         ...item,
         rate: newRate,
-        amount: shipWeight > 0 ? shipWeight * newRate : (parseFloat(item.quantity) || 1) * newRate
+        amount: parseFloat((shipWeight > 0 ? shipWeight * newRate : (parseFloat(item.quantity) || 1) * newRate).toFixed(2))
       };
     }));
     
@@ -849,8 +870,8 @@ export function InvoiceEditor() {
         const volWeight = updated.length_cm && updated.width_cm && updated.height_cm
           ? (updated.length_cm * updated.width_cm * updated.height_cm) / 5000
           : 0;
-        const shipWeight = Math.max(updated.weight || 0, volWeight);
-        updated.amount = shipWeight * (parseFloat(updated.rate) || 0);
+        const shipWeight = Math.round(Math.max(updated.weight || 0, volWeight) * 100) / 100; // Round to 2dp first
+        updated.amount = parseFloat((shipWeight * (parseFloat(updated.rate) || 0)).toFixed(2));
       }
       return updated;
     }));
@@ -1192,7 +1213,7 @@ export function InvoiceEditor() {
       const volWeight = parcel.length_cm && parcel.width_cm && parcel.height_cm
         ? (parcel.length_cm * parcel.width_cm * parcel.height_cm) / 5000
         : 0;
-      const shipWeight = Math.max(weight, volWeight);
+      const shipWeight = Math.round(Math.max(weight, volWeight) * 100) / 100; // Round to 2dp before rate calc
       
       return {
         id: `item-${Date.now()}-${parcelId}`,
@@ -1202,7 +1223,7 @@ export function InvoiceEditor() {
         weight: weight,
         unit: 'kg',
         rate: rate,
-        amount: shipWeight * rate,
+        amount: parseFloat((shipWeight * rate).toFixed(2)),
         parcel_label: parcel.parcel_label || '',
         client_name: client?.name || parcel.client_name,
         recipient_name: parcel.recipient || '',
@@ -1259,7 +1280,7 @@ export function InvoiceEditor() {
       const volWeight = parcel.length_cm && parcel.width_cm && parcel.height_cm
         ? (parcel.length_cm * parcel.width_cm * parcel.height_cm) / 5000
         : 0;
-      const shipWeight = Math.max(weight, volWeight);
+      const shipWeight = Math.round(Math.max(weight, volWeight) * 100) / 100; // Round to 2dp before rate calc
       
       return {
         id: `item-${Date.now()}-${parcelId}`,
@@ -1269,7 +1290,7 @@ export function InvoiceEditor() {
         weight: weight,
         unit: 'kg',
         rate: rate,
-        amount: shipWeight * rate,
+        amount: parseFloat((shipWeight * rate).toFixed(2)),
         parcel_label: parcel.parcel_label || '',
         client_name: client?.name || parcel.client_name,
         recipient_name: parcel.recipient || '',
@@ -1442,7 +1463,7 @@ export function InvoiceEditor() {
       const volWeight = parcel.length_cm && parcel.width_cm && parcel.height_cm
         ? (parcel.length_cm * parcel.width_cm * parcel.height_cm) / 5000
         : 0;
-      const shipWeight = Math.max(weight, volWeight);
+      const shipWeight = Math.round(Math.max(weight, volWeight) * 100) / 100; // Round to 2dp before rate calc
       
       return {
         id: `item-${Date.now()}-${Math.random().toString(36).substr(2,9)}`,
@@ -1452,7 +1473,7 @@ export function InvoiceEditor() {
         weight: weight,
         unit: 'kg',
         rate: rate,
-        amount: shipWeight * rate,
+        amount: parseFloat((shipWeight * rate).toFixed(2)),
         parcel_label: parcel.barcode || parcel.parcel_label || '',
         client_name: client?.name || parcel.client_name,
         recipient_name: parcel.recipient_name || parcel.recipient || '',
@@ -1855,10 +1876,23 @@ export function InvoiceEditor() {
                   <div className="flex items-center gap-4">
                     <Label>Line Items</Label>
                     <span className="text-sm text-gray-500">
-                      {lineItems.length} items | Total Qty: {totals.totalQty} pieces
+                      {consolidateItems 
+                        ? `${displayedLineItems.length} groups (${lineItems.length} total) | Total Qty: ${totals.totalQty} pieces`
+                        : `${lineItems.length} items | Total Qty: ${totals.totalQty} pieces`
+                      }
                     </span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    {/* SESSION Q: Consolidate Identical toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setConsolidateItems(v => !v)}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ${consolidateItems ? 'bg-[#6B633C] text-white border-[#6B633C]' : 'bg-white text-gray-600 border-gray-300 hover:border-[#6B633C]'}`}
+                      data-testid="consolidate-items-toggle"
+                      title="Group identical items into one row"
+                    >
+                      Consolidate Identical
+                    </button>
                     {selectedLineItems.size > 0 && (
                       <Button 
                         variant="outline" 
@@ -1968,7 +2002,7 @@ export function InvoiceEditor() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        lineItems.map((item, idx) => {
+                        displayedLineItems.map((item, idx) => {
                           const { qty, weight } = getItemDisplayValues(item);
                           const volWeight = calculateVolumetricWeight(item.length_cm, item.width_cm, item.height_cm);
                           const actualWeight = parseFloat(weight) || 0;

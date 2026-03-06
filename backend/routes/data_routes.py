@@ -14,7 +14,7 @@ import zipfile
 
 from database import db
 from dependencies import get_current_user, get_tenant_id
-from services.barcode_service import generate_barcode
+from services.barcode_service import generate_barcode, generate_parcel_barcode
 
 router = APIRouter()
 
@@ -247,8 +247,11 @@ async def import_parcels_from_csv(
             
             # Create shipment with parcel sequence for QTY > 1
             shipment_id = str(uuid.uuid4())
+            # Generate SX-format barcode for this shipment
+            parcel_barcode = await generate_parcel_barcode(tenant_id)
             shipment = {
                 "id": shipment_id,
+                "barcode": parcel_barcode,
                 "tenant_id": tenant_id,
                 "client_id": client["id"],
                 "trip_id": None,  # Not assigned to any trip
@@ -275,8 +278,7 @@ async def import_parcels_from_csv(
             }
             await db.shipments.insert_one(shipment)
             
-            # Create piece with barcode
-            barcode = generate_barcode(None, stats["parcels_created"] + 1, 1)
+            # Create piece with SX barcode (same as shipment barcode)
             piece = {
                 "id": str(uuid.uuid4()),
                 "shipment_id": shipment_id,
@@ -285,7 +287,7 @@ async def import_parcels_from_csv(
                 "length_cm": length,
                 "width_cm": width,
                 "height_cm": height,
-                "barcode": barcode,
+                "barcode": parcel_barcode,
                 "photo_url": None,
                 "loaded_at": None
             }
@@ -597,6 +599,47 @@ async def fix_invoice_line_items(
         "message": "Line items migration complete",
         "total_line_items": len(line_items),
         "fixed_count": fixed_count
+    }
+
+
+# ============ BARCODE MIGRATION (SESSION Q) ============
+
+@router.post("/data/migrate-barcodes")
+async def migrate_barcodes(
+    tenant_id: str = Depends(get_tenant_id),
+    user: dict = Depends(get_current_user)
+):
+    """Assign SX######## barcodes to all shipments that are missing one."""
+    # Find all shipments without a barcode for this tenant
+    shipments_without_barcode = await db.shipments.find(
+        {"tenant_id": tenant_id, "barcode": None},
+        {"_id": 0, "id": 1}
+    ).to_list(None)
+
+    # Also find ones where barcode field doesn't exist at all
+    shipments_no_field = await db.shipments.find(
+        {"tenant_id": tenant_id, "barcode": {"$exists": False}},
+        {"_id": 0, "id": 1}
+    ).to_list(None)
+
+    all_missing = {s["id"] for s in shipments_without_barcode + shipments_no_field}
+    count = 0
+    for shipment_id in all_missing:
+        new_barcode = await generate_parcel_barcode(tenant_id)
+        await db.shipments.update_one(
+            {"id": shipment_id},
+            {"$set": {"barcode": new_barcode}}
+        )
+        # Also update the piece barcode if it exists
+        await db.shipment_pieces.update_many(
+            {"shipment_id": shipment_id},
+            {"$set": {"barcode": new_barcode}}
+        )
+        count += 1
+
+    return {
+        "message": f"Barcode migration complete. {count} shipments updated.",
+        "count": count
     }
 
 
